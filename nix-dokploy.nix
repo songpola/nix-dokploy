@@ -82,6 +82,14 @@ in {
           Changing this may cause compatibility issues with Dokploy.
         '';
       };
+
+      extraArgs = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = ''
+          Extra arguments to pass to the Traefik container.
+        '';
+      };
     };
 
     swarm = {
@@ -302,6 +310,7 @@ in {
                   -p 80:80/tcp \
                   -p 443:443/tcp \
                   -p 443:443/udp \
+                  ${cfg.traefik.extraArgs} \
                   ${cfg.traefik.image}
               fi
             '';
