@@ -83,6 +83,21 @@ in {
         '';
       };
 
+      ports = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ "80:80/tcp" "443:443/tcp" "443:443/udp" ];
+        description = ''
+          Port bindings for the Traefik container.
+
+          Format: "hostPort:containerPort/protocol"
+
+          Defaults:
+            - "80:80/tcp"   (HTTP)
+            - "443:443/tcp" (HTTPS)
+            - "443:443/udp" (HTTP3)
+        '';
+      };
+
       extraArgs = lib.mkOption {
         type = lib.types.str;
         default = "";
@@ -291,6 +306,7 @@ in {
         RemainAfterExit = true;
 
         ExecStart = let
+          portArgs = lib.concatMapStringsSep " " (p: "-p ${p}") cfg.traefik.ports;
           script = pkgs.writeShellApplication {
             name = "dokploy-traefik-start";
             runtimeInputs = [pkgs.docker];
@@ -307,9 +323,7 @@ in {
                   -v /var/run/docker.sock:/var/run/docker.sock \
                   -v ${cfg.dataDir}/traefik/traefik.yml:/etc/traefik/traefik.yml \
                   -v ${cfg.dataDir}/traefik/dynamic:/etc/dokploy/traefik/dynamic \
-                  -p 80:80/tcp \
-                  -p 443:443/tcp \
-                  -p 443:443/udp \
+                  ${portArgs} \
                   ${cfg.traefik.extraArgs} \
                   ${cfg.traefik.image}
               fi
